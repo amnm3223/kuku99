@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>くくマスター！たのしいかけざん</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti for Celebration Effects -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts: Zen Maru Gothic for super cute Japanese typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              pink: '#FF7EA5',
+              yellow: '#FFD166',
+              green: '#06D6A0',
+              blue: '#118AB2',
+              purple: '#A29BFE',
+              cream: '#FFF9E6',
+            }
+          },
+          fontFamily: {
+            maru: ['"Zen Maru Gothic"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      background-color: #FFF9E6;
+      background-image: radial-gradient(#FFD166 1.5px, transparent 1.5px), radial-gradient(#FF7EA5 1.5px, #FFF9E6 1.5px);
+      background-size: 60px 60px;
+      background-position: 0 0, 30px 30px;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .bounce-interactive {
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .bounce-interactive:active {
+      transform: scale(0.92) translateY(4px) !important;
+      box-shadow: none !important;
+    }
+
+    .bubble-shadow {
+      box-shadow: 0 8px 0 rgba(0, 0, 0, 0.12);
+    }
+    .bubble-shadow-pink {
+      box-shadow: 0 6px 0 #E0527A;
+    }
+    .bubble-shadow-yellow {
+      box-shadow: 0 6px 0 #D9A014;
+    }
+    .bubble-shadow-green {
+      box-shadow: 0 6px 0 #049A73;
+    }
+    .bubble-shadow-blue {
+      box-shadow: 0 6px 0 #0C617D;
+    }
+    .bubble-shadow-purple {
+      box-shadow: 0 6px 0 #7369D3;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(2deg); }
+    }
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.5); }
+      70% { transform: scale(1.1); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .animate-pop {
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    /* Speech bubble tail */
+    .speech-bubble {
+      position: relative;
+    }
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 14px 12px 0;
+      border-style: solid;
+      border-color: #ffffff transparent;
+      display: block;
+      width: 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between p-3 sm:p-5">
+
+  <!-- TOP HEADER -->
+  <header class="w-full max-w-xl mx-auto flex items-center justify-between mb-3 bg-white/80 backdrop-blur-md px-4 py-2 rounded-3xl border-4 border-white shadow-md">
+    <div onclick="showView('menu')" class="cursor-pointer flex items-center space-x-2">
+      <span class="text-3xl animate-bounce">🐱</span>
+      <h1 class="text-xl sm:text-2xl font-black text-brand-pink tracking-wider">くくマスター！</h1>
+    </div>
+    <div class="flex space-x-2">
+      <button onclick="toggleSound()" id="sound-btn" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold p-2 px-3 rounded-2xl text-xs sm:text-sm border-2 border-amber-300 transition">
+        🔊 おと: ON
+      </button>
+      <button onclick="showView('records')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold p-2 px-3 rounded-2xl text-xs sm:text-sm border-2 border-indigo-300 transition">
+        🏆 きろく
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="w-full max-w-xl mx-auto flex-grow flex flex-col justify-center my-2">
+
+    <!-- ================= 1. MENU VIEW ================= -->
+    <section id="view-menu" class="bg-white/95 rounded-3xl p-5 sm:p-7 border-4 border-white shadow-xl animate-pop">
+      
+      <!-- Character Banner -->
+      <div class="text-center mb-6">
+        <div class="inline-block relative">
+          <div class="text-6xl sm:text-7xl mb-2 animate-float">🐰</div>
+          <span class="bg-brand-pink text-white text-xs font-bold px-3 py-1 rounded-full absolute -top-1 -right-4 shadow transform rotate-12">
+            きょうもがんばろう！
+          </span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-700">どれで あそぶ？</h2>
+      </div>
+
+      <!-- Mode Selection Grid -->
+      <div class="space-y-4">
+        <!-- Practice Mode -->
+        <button onclick="selectMode('practice')" class="w-full bg-emerald-400 hover:bg-emerald-500 text-white rounded-2xl p-4 flex items-center justify-between bubble-shadow-green bounce-interactive transition border-2 border-white">
+          <div class="text-left flex items-center space-x-3">
+            <span class="text-4xl bg-white/20 p-2 rounded-xl">📖</span>
+            <div>
+              <div class="text-xl sm:text-2xl font-black">じっくり れんしゅう</div>
+              <div class="text-xs sm:text-sm text-emerald-100 font-bold">じかんを きにせず じっくりできるよ！</div>
+            </div>
+          </div>
+          <span class="text-2xl">➔</span>
+        </button>
+
+        <!-- Time Attack Mode -->
+        <button onclick="selectMode('timeattack')" class="w-full bg-sky-400 hover:bg-sky-500 text-white rounded-2xl p-4 flex items-center justify-between bubble-shadow-blue bounce-interactive transition border-2 border-white">
+          <div class="text-left flex items-center space-x-3">
+            <span class="text-4xl bg-white/20 p-2 rounded-xl">⚡</span>
+            <div>
+              <div class="text-xl sm:text-2xl font-black">タイムアタック (10もん)</div>
+              <div class="text-xs sm:text-sm text-sky-100 font-bold">どれくらい はやく とけるかな？</div>
+            </div>
+          </div>
+          <span class="text-2xl">➔</span>
+        </button>
+
+        <!-- 1 Minute Challenge -->
+        <button onclick="selectMode('1min')" class="w-full bg-rose-400 hover:bg-rose-500 text-white rounded-2xl p-4 flex items-center justify-between bubble-shadow-pink bounce-interactive transition border-2 border-white">
+          <div class="text-left flex items-center space-x-3">
+            <span class="text-4xl bg-white/20 p-2 rounded-xl">⏰</span>
+            <div>
+              <div class="text-xl sm:text-2xl font-black">1ぷんかん チャレンジ</div>
+              <div class="text-xs sm:text-sm text-rose-100 font-bold">1ぷんで なんにん とけるか 勝負！</div>
+            </div>
+          </div>
+          <span class="text-2xl">➔</span>
+        </button>
+      </div>
+
+      <!-- Quick Chart Link -->
+      <div class="mt-6 text-center">
+        <button onclick="showView('chart')" class="text-indigo-500 hover:text-indigo-700 font-bold text-sm underline decoration-2 underline-offset-4">
+          🔍 九九のひょう（一覧）をみる
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= 2. CONFIG VIEW ================= -->
+    <section id="view-config" class="hidden bg-white/95 rounded-3xl p-5 sm:p-7 border-4 border-white shadow-xl animate-pop">
+      <div class="flex items-center justify-between mb-4">
+        <button onclick="showView('menu')" class="text-slate-500 hover:text-slate-700 font-bold text-sm bg-slate-100 px-3 py-1.5 rounded-xl">
+          ⬅ もどる
+        </button>
+        <h2 id="config-title" class="text-xl font-black text-brand-pink">せってい</h2>
+        <div class="w-12"></div>
+      </div>
+
+      <!-- Dan Selection (1-9 or All) -->
+      <div class="mb-5">
+        <label class="block text-sm font-black text-slate-600 mb-2">どれを れんしゅうする？（だん）</label>
+        <div class="grid grid-cols-5 gap-2" id="dan-buttons-container">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+
+      <!-- Order Selection -->
+      <div class="mb-6">
+        <label class="block text-sm font-black text-slate-600 mb-2">じゅんばんを えらぶ</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setOrder('sequence')" id="order-sequence" class="order-btn bg-purple-100 text-purple-700 font-black p-3 rounded-2xl border-2 border-purple-300 transition text-center">
+            <div class="text-lg">1➔9</div>
+            <div class="text-xs">じゅんばん</div>
+          </button>
+          <button onclick="setOrder('reverse')" id="order-reverse" class="order-btn bg-slate-100 text-slate-600 font-black p-3 rounded-2xl border-2 border-slate-200 transition text-center">
+            <div class="text-lg">9➔1</div>
+            <div class="text-xs">はんたい</div>
+          </button>
+          <button onclick="setOrder('shuffle')" id="order-shuffle" class="order-btn bg-slate-100 text-slate-600 font-black p-3 rounded-2xl border-2 border-slate-200 transition text-center">
+            <div class="text-lg">🎲</div>
+            <div class="text-xs">まぜまぜ</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Start Button -->
+      <button onclick="startGame()" class="w-full bg-amber-400 hover:bg-amber-500 text-white font-black text-2xl p-4 rounded-2xl bubble-shadow-yellow bounce-interactive transition border-2 border-white text-center">
+        スタート！ 🚀
+      </button>
+    </section>
+
+    <!-- ================= 3. GAME VIEW ================= -->
+    <section id="view-game" class="hidden flex flex-col justify-between">
+      
+      <!-- Top Game Status Header -->
+      <div class="bg-white/90 rounded-2xl p-3 mb-3 border-2 border-white shadow flex items-center justify-between">
+        <button onclick="showView('menu')" class="text-xs font-bold bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg">
+          やめる
+        </button>
+
+        <div class="flex items-center space-x-3">
+          <!-- Progress or Score Badge -->
+          <div class="text-center">
+            <span class="text-[10px] text-slate-400 block font-bold" id="status-label">もんだい</span>
+            <span class="text-base font-black text-indigo-600" id="game-progress">1 / 10</span>
+          </div>
+
+          <!-- Timer Display -->
+          <div class="text-center bg-amber-100 border border-amber-300 px-3 py-0.5 rounded-xl">
+            <span class="text-[10px] text-amber-700 block font-bold">じかん</span>
+            <span class="text-base font-black font-mono text-amber-800" id="game-timer">00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Quiz Card -->
+      <div class="bg-white/95 rounded-3xl p-5 border-4 border-white shadow-xl mb-3 flex flex-col items-center relative overflow-hidden">
+        
+        <!-- Mascot Character & Chant Bubble -->
+        <div class="w-full flex flex-col items-center mb-3">
+          <!-- Chant Speech Bubble -->
+          <div class="speech-bubble bg-amber-100 border-2 border-amber-300 text-amber-900 px-4 py-2 rounded-2xl font-black text-base sm:text-lg mb-3 shadow-sm text-center flex items-center justify-center space-x-2">
+            <span id="chant-text">「 ににんが ... 」</span>
+            <button onclick="speakChant()" class="bg-amber-300 hover:bg-amber-400 text-amber-900 p-1 rounded-full text-xs transition" title="もういちど きく">
+              🔊
+            </button>
+          </div>
+          <!-- Animal Mascot -->
+          <div id="mascot-emoji" class="text-5xl sm:text-6xl animate-float">🐶</div>
+        </div>
+
+        <!-- Formula Display -->
+        <div class="flex items-center justify-center space-x-2 sm:space-x-4 my-2">
+          <span id="q-num1" class="text-5xl sm:text-6xl font-black text-brand-blue">2</span>
+          <span class="text-3xl sm:text-4xl font-black text-brand-pink">✕</span>
+          <span id="q-num2" class="text-5xl sm:text-6xl font-black text-brand-blue">2</span>
+          <span class="text-3xl sm:text-4xl font-black text-brand-pink">＝</span>
+          <!-- Answer Slot -->
+          <div id="answer-slot" class="w-20 sm:w-24 h-16 sm:h-20 bg-amber-50 border-4 border-dashed border-amber-300 rounded-2xl flex items-center justify-center text-4xl sm:text-5xl font-black text-amber-600 shadow-inner">
+            ?
+          </div>
+        </div>
+
+        <!-- Feedback Overlay Animation -->
+        <div id="feedback-overlay" class="absolute inset-0 bg-white/90 flex flex-col items-center justify-center hidden z-10">
+          <div id="feedback-icon" class="text-7xl mb-2">⭕</div>
+          <div id="feedback-text" class="text-2xl font-black text-emerald-600">せいかい！</div>
+        </div>
+      </div>
+
+      <!-- Keypad / Input Options -->
+      <div id="input-container" class="bg-white/80 backdrop-blur-md p-3 rounded-3xl border-4 border-white shadow-lg">
+        
+        <!-- Numpad Mode (Default) -->
+        <div id="numpad-grid" class="grid grid-cols-3 gap-2 sm:gap-3">
+          <button onclick="pressNum(1)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">1</button>
+          <button onclick="pressNum(2)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">2</button>
+          <button onclick="pressNum(3)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">3</button>
+          <button onclick="pressNum(4)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">4</button>
+          <button onclick="pressNum(5)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">5</button>
+          <button onclick="pressNum(6)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">6</button>
+          <button onclick="pressNum(7)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">7</button>
+          <button onclick="pressNum(8)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">8</button>
+          <button onclick="pressNum(9)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">9</button>
+          <button onclick="pressNum('clear')" class="bg-rose-100 hover:bg-rose-200 text-rose-600 font-black text-lg py-3 rounded-2xl border-2 border-rose-200 bounce-interactive">けす</button>
+          <button onclick="pressNum(0)" class="num-btn bg-white hover:bg-slate-50 text-slate-700 font-black text-2xl sm:text-3xl py-3 rounded-2xl border-2 border-slate-200 bubble-shadow bounce-interactive">0</button>
+          <button onclick="submitAnswer()" class="bg-emerald-400 hover:bg-emerald-500 text-white font-black text-lg py-3 rounded-2xl border-2 border-white bubble-shadow-green bounce-interactive">こたえ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 4. RESULT VIEW ================= -->
+    <section id="view-result" class="hidden bg-white/95 rounded-3xl p-6 border-4 border-white shadow-xl text-center animate-pop">
+      <div id="result-badge" class="text-6xl mb-2 animate-bounce">🏆</div>
+      <h2 id="result-title" class="text-3xl font-black text-brand-pink mb-1">すごーい！かんせい！</h2>
+      <p id="result-subtitle" class="text-sm font-bold text-slate-500 mb-6">さいごまで よく がんばったね！</p>
+
+      <!-- Score Box -->
+      <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 space-y-3">
+        <div class="flex justify-between items-center text-sm font-bold text-slate-600">
+          <span>モード / だん:</span>
+          <span id="res-mode-dan" class="text-indigo-600 font-black text-base">タイムアタック (2のだん)</span>
+        </div>
+        <div class="flex justify-between items-center text-sm font-bold text-slate-600">
+          <span>せいかい すう:</span>
+          <span id="res-score" class="text-emerald-600 font-black text-xl">10 / 10 問</span>
+        </div>
+        <div class="flex justify-between items-center text-sm font-bold text-slate-600">
+          <span>かかった じかん:</span>
+          <span id="res-time" class="text-amber-600 font-black text-xl">00:24</span>
+        </div>
+        <div id="new-record-badge" class="hidden bg-rose-500 text-white font-black text-xs py-1.5 px-3 rounded-full animate-pulse inline-block shadow">
+          🎉 さいこうきろく こうしん！ 🎉
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-3">
+        <button onclick="startGame()" class="w-full bg-emerald-400 hover:bg-emerald-500 text-white font-black text-xl p-3.5 rounded-2xl bubble-shadow-green bounce-interactive transition border-2 border-white">
+          もういちど チャレンジ 🔄
+        </button>
+        <button onclick="showView('menu')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base p-3 rounded-2xl transition">
+          メニューに もどる 🏠
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= 5. RECORDS VIEW ================= -->
+    <section id="view-records" class="hidden bg-white/95 rounded-3xl p-5 border-4 border-white shadow-xl animate-pop">
+      <div class="flex items-center justify-between mb-4">
+        <button onclick="showView('menu')" class="text-slate-500 hover:text-slate-700 font-bold text-sm bg-slate-100 px-3 py-1.5 rounded-xl">
+          ⬅ もどる
+        </button>
+        <h2 class="text-xl font-black text-indigo-600">🏆 さいこうきろく</h2>
+        <div class="w-12"></div>
+      </div>
+
+      <div class="space-y-4 max-h-96 overflow-y-auto pr-1" id="records-container">
+        <!-- Dynamically injected via JS -->
+      </div>
+    </section>
+
+    <!-- ================= 6. CHART VIEW (九九の表) ================= -->
+    <section id="view-chart" class="hidden bg-white/95 rounded-3xl p-4 border-4 border-white shadow-xl animate-pop">
+      <div class="flex items-center justify-between mb-3">
+        <button onclick="showView('menu')" class="text-slate-500 hover:text-slate-700 font-bold text-sm bg-slate-100 px-3 py-1.5 rounded-xl">
+          ⬅ もどる
+        </button>
+        <h2 class="text-xl font-black text-brand-pink">🔍 九九（くく）のひょう</h2>
+        <div class="w-12"></div>
+      </div>
+
+      <!-- Dan Tabs for Chart -->
+      <div class="flex space-x-1 overflow-x-auto pb-2 mb-3 scrollbar-none" id="chart-dan-tabs">
+        <!-- JS inserts 1..9 buttons -->
+      </div>
+
+      <!-- Selected Dan List -->
+      <div class="bg-amber-50 rounded-2xl p-3 border-2 border-amber-200 space-y-2 max-h-80 overflow-y-auto" id="chart-list">
+        <!-- JS inserts formula lines -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="text-center text-xs text-slate-400 font-bold py-2">
+    たのしく くくを まなぼう！ ✨
+  </footer>
+
+  <!-- AUDIO & GAME LOGIC ENGINE -->
+  <script>
+    /* ==========================================================================
+       1. DATA DEFINITIONS & TRADITIONAL JAPANESE CHANTS (PROBLEM ONLY)
+       ========================================================================== */
+    // 九九の「式（掛ける部分）」までの読み方のみ（答えは含めません）
+    const CHANTS = {
+      // 1の段
+      "1x1": "いんいちが", "1x2": "いんにが", "1x3": "いんさんが", "1x4": "いんしが", "1x5": "いんごが",
+      "1x6": "いんろくが", "1x7": "いんしちが", "1x8": "いんはちが", "1x9": "いんくが",
+      // 2の段
+      "2x1": "にいんいちが", "2x2": "ににんが", "2x3": "にさん", "2x4": "にし", "2x5": "にご",
+      "2x6": "にろく", "2x7": "にしち", "2x8": "にはち", "2x9": "にく",
+      // 3の段
+      "3x1": "さんいちが", "3x2": "さんに", "3x3": "さざんが", "3x4": "さんし", "3x5": "さんご",
+      "3x6": "さんろく", "3x7": "さんしち", "3x8": "さんぱ", "3x9": "さんく",
+      // 4の段
+      "4x1": "しいちが", "4x2": "しにが", "4x3": "しさん", "4x4": "しし", "4x5": "しご",
+      "4x6": "しろく", "4x7": "ししち", "4x8": "しは", "4x9": "しく",
+      // 5の段
+      "5x1": "ごいちが", "5x2": "ごに", "5x3": "ごさん", "5x4": "ごし", "5x5": "ごご",
+      "5x6": "ごろく", "5x7": "ごしち", "5x8": "ごは", "5x9": "ごっく",
+      // 6の段
+      "6x1": "ろくいちが", "6x2": "ろくに", "6x3": "ろくさん", "6x4": "ろくし", "6x5": "ろくご",
+      "6x6": "ろくろく", "6x7": "ろくしち", "6x8": "ろくは", "6x9": "ろっく",
+      // 7の段
+      "7x1": "しちいちが", "7x2": "しちに", "7x3": "しちさん", "7x4": "しちし", "7x5": "しちご",
+      "7x6": "しちろく", "7x7": "しちしち", "7x8": "しちは", "7x9": "しちく",
+      // 8の段
+      "8x1": "はちいちが", "8x2": "はちに", "8x3": "はちさん", "8x4": "はちし", "8x5": "はちご",
+      "8x6": "はちろく", "8x7": "はちしち", "8x8": "はっぱ", "8x9": "はっく",
+      // 9の段
+      "9x1": "くいちが", "9x2": "くに", "9x3": "くさん", "9x4": "くし", "9x5": "くご",
+      "9x6": "くろく", "9x7": "くしち", "9x8": "くは", "9x9": "くく"
+    };
+
+    // テキスト文字を排除し、すべて絵文字イラストに修正
+    const MASCOTS = ['🐶', '🐱', '🐰', '🐻', '🦊', '🐼', '🦁', '🐯', '🐸', '🦄'];
+
+    /* ==========================================================================
+       2. APP STATE
+       ========================================================================== */
+    let currentMode = 'practice'; // 'practice', 'timeattack', '1min'
+    let selectedDan = 2; // 1-9 or 'all'
+    let selectedOrder = 'sequence'; // 'sequence', 'reverse', 'shuffle'
+
+    let questionsList = [];
+    let currentQIndex = 0;
+    let currentInput = "";
+    let scoreCorrect = 0;
+    
+    let timerInterval = null;
+    let startTime = 0;
+    let elapsedTime = 0; // seconds
+    let soundEnabled = true;
+
+    /* ==========================================================================
+       3. WEB AUDIO SYNTHESIZER FOR SOUND EFFECTS
+       ========================================================================== */
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioCtx();
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === 'correct') {
+        // High ping melody
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, now + idx * 0.06);
+          gain.gain.linearRampToValueAtTime(0.2, now + idx * 0.06 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.2);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.06);
+          osc.stop(now + idx * 0.06 + 0.2);
+        });
+      } else if (type === 'wrong') {
+        // Low buzz
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'fanfare') {
+        // Victory Chime
+        const notes = [523.25, 659.25, 783.99, 1046.50, 880, 1046.50];
+        const times = [0, 0.12, 0.24, 0.36, 0.55, 0.7];
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.25, now + times[i]);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + times[i] + 0.3);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + times[i]);
+          osc.stop(now + times[i] + 0.3);
+        });
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-btn').innerText = soundEnabled ? '🔊 おと: ON' : '🔇 おと: OFF';
+    }
+
+    /* Speech Synthesis for Chants */
+    function speakChant() {
+      if (!('speechSynthesis' in window)) return;
+      const q = questionsList[currentQIndex];
+      if (!q) return;
+      const key = `${q.n1}x${q.n2}`;
+      const text = (CHANTS[key] || `${q.n1} かける ${q.n2}`) + "？";
+
+      window.speechSynthesis.cancel(); // Stop current speech
+      const uttr = new SpeechSynthesisUtterance(text);
+      uttr.lang = 'ja-JP';
+      uttr.rate = 0.9; // Slight slow for kids
+      uttr.pitch = 1.2; // Cheerful voice
+      window.speechSynthesis.speak(uttr);
+    }
+
+    /* ==========================================================================
+       4. NAVIGATION & VIEWS
+       ========================================================================== */
+    function showView(viewName) {
+      playSound('click');
+      clearInterval(timerInterval);
+
+      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) target.classList.remove('hidden');
+
+      if (viewName === 'records') renderRecords();
+      if (viewName === 'chart') renderChart(selectedDan === 'all' ? 2 : selectedDan);
+    }
+
+    function selectMode(mode) {
+      currentMode = mode;
+      renderDanButtons();
+      showView('config');
+
+      const titleMap = {
+        'practice': 'じっくり れんしゅう 設定',
+        'timeattack': 'タイムアタック 設定',
+        '1min': '1ぷんかん チャレンジ 設定'
+      };
+      document.getElementById('config-title').innerText = titleMap[mode];
+    }
+
+    function renderDanButtons() {
+      const container = document.getElementById('dan-buttons-container');
+      container.innerHTML = '';
+
+      for (let i = 1; i <= 9; i++) {
+        const btn = document.createElement('button');
+        btn.className = `dan-select-btn font-black p-3 rounded-2xl border-2 transition ${
+          selectedDan === i 
+            ? 'bg-amber-400 text-white border-amber-500 shadow-md' 
+            : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+        }`;
+        btn.innerText = `${i}のだん`;
+        btn.onclick = () => {
+          selectedDan = i;
+          renderDanButtons();
+          playSound('click');
+        };
+        container.appendChild(btn);
+      }
+
+      // "All" button
+      const allBtn = document.createElement('button');
+      allBtn.className = `dan-select-btn font-black p-3 rounded-2xl border-2 transition col-span-2 ${
+        selectedDan === 'all' 
+          ? 'bg-brand-pink text-white border-rose-400 shadow-md' 
+          : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+      }`;
+      allBtn.innerText = `ぜんぶ (1~9)`;
+      allBtn.onclick = () => {
+        selectedDan = 'all';
+        renderDanButtons();
+        playSound('click');
+      };
+      container.appendChild(allBtn);
+    }
+
+    function setOrder(order) {
+      playSound('click');
+      selectedOrder = order;
+      document.querySelectorAll('.order-btn').forEach(btn => {
+        btn.className = 'order-btn bg-slate-100 text-slate-600 font-black p-3 rounded-2xl border-2 border-slate-200 transition text-center';
+      });
+      const active = document.getElementById(`order-${order}`);
+      if (active) {
+        active.className = 'order-btn bg-purple-100 text-purple-700 font-black p-3 rounded-2xl border-2 border-purple-300 transition text-center shadow-md';
+      }
+    }
+
+    /* ==========================================================================
+       5. GAME ENGINE
+       ========================================================================== */
+    function startGame() {
+      playSound('click');
+      
+      // Build Question Pool
+      questionsList = [];
+      let dans = selectedDan === 'all' ? [1,2,3,4,5,6,7,8,9] : [parseInt(selectedDan)];
+
+      dans.forEach(d => {
+        let multipliers = [1,2,3,4,5,6,7,8,9];
+        if (selectedOrder === 'reverse') multipliers.reverse();
+        else if (selectedOrder === 'shuffle') multipliers.sort(() => Math.random() - 0.5);
+
+        multipliers.forEach(m => {
+          questionsList.push({ n1: d, n2: m, ans: d * m });
+        });
+      });
+
+      if (selectedDan === 'all' && selectedOrder === 'shuffle') {
+        questionsList.sort(() => Math.random() - 0.5);
+      }
+
+      // Limit count if Time Attack Mode
+      if (currentMode === 'timeattack') {
+        questionsList = questionsList.slice(0, 10);
+      }
+
+      currentQIndex = 0;
+      scoreCorrect = 0;
+      currentInput = "";
+      elapsedTime = 0;
+
+      showView('game');
+      startTimer();
+      renderCurrentQuestion();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      startTime = Date.now();
+
+      if (currentMode === '1min') {
+        elapsedTime = 60;
+        updateTimerDisplay(elapsedTime);
+        timerInterval = setInterval(() => {
+          elapsedTime--;
+          updateTimerDisplay(elapsedTime);
+          if (elapsedTime <= 0) {
+            clearInterval(timerInterval);
+            finishGame();
+          }
+        }, 1000);
+      } else {
+        elapsedTime = 0;
+        updateTimerDisplay(elapsedTime);
+        timerInterval = setInterval(() => {
+          elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+          updateTimerDisplay(elapsedTime);
+        }, 1000);
+      }
+    }
+
+    function updateTimerDisplay(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      document.getElementById('game-timer').innerText = `${m}:${s}`;
+    }
+
+    function renderCurrentQuestion() {
+      currentInput = "";
+      document.getElementById('answer-slot').innerText = "?";
+      document.getElementById('answer-slot').classList.remove('text-indigo-600', 'bg-emerald-100');
+
+      const q = questionsList[currentQIndex];
+
+      // Update Labels
+      if (currentMode === '1min') {
+        document.getElementById('status-label').innerText = 'せいかい すう';
+        document.getElementById('game-progress').innerText = `${scoreCorrect} 問`;
+      } else {
+        document.getElementById('status-label').innerText = 'もんだい';
+        document.getElementById('game-progress').innerText = `${currentQIndex + 1} / ${questionsList.length}`;
+      }
+
+      document.getElementById('q-num1').innerText = q.n1;
+      document.getElementById('q-num2').innerText = q.n2;
+
+      // Update Chant Text & Mascot
+      const key = `${q.n1}x${q.n2}`;
+      const chant = CHANTS[key] || `${q.n1}かける${q.n2}`;
+      document.getElementById('chant-text').innerText = `「 ${chant} ? 」`;
+      
+      const randomMascot = MASCOTS[Math.floor(Math.random() * MASCOTS.length)];
+      document.getElementById('mascot-emoji').innerText = randomMascot;
+
+      // Speak chant automatically if sound enabled
+      if (soundEnabled) {
+        speakChant();
+      }
+    }
+
+    /* Number Keypad Handler */
+    function pressNum(val) {
+      playSound('click');
+      if (val === 'clear') {
+        currentInput = "";
+      } else {
+        if (currentInput.length < 2) {
+          currentInput += val.toString();
+        }
+      }
+      const slot = document.getElementById('answer-slot');
+      slot.innerText = currentInput === "" ? "?" : currentInput;
+
+      // 自動判定チェック：入力した数字が正解と一致しているか
+      if (currentInput !== "") {
+        const userAns = parseInt(currentInput);
+        const q = questionsList[currentQIndex];
+        if (userAns === q.ans) {
+          submitAnswer();
+        }
+      }
+    }
+
+    /* Answer Submission */
+    function submitAnswer() {
+      if (currentInput === "") return;
+      const userAns = parseInt(currentInput);
+      const q = questionsList[currentQIndex];
+
+      const overlay = document.getElementById('feedback-overlay');
+      const icon = document.getElementById('feedback-icon');
+      const text = document.getElementById('feedback-text');
+
+      if (userAns === q.ans) {
+        // Correct Answer
+        playSound('correct');
+        scoreCorrect++;
+        icon.innerText = '⭕';
+        text.innerText = 'せいかい！';
+        text.className = 'text-2xl font-black text-emerald-600';
+      } else {
+        // Wrong Answer
+        playSound('wrong');
+        icon.innerText = '❌';
+        text.innerText = `ざんねん！ (${q.ans})`;
+        text.className = 'text-2xl font-black text-rose-500';
+      }
+
+      overlay.classList.remove('hidden');
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        currentQIndex++;
+
+        if (currentMode === '1min') {
+          // Endless loop for 1-min challenge until time is up
+          if (currentQIndex >= questionsList.length) {
+            // reshuffle
+            questionsList.sort(() => Math.random() - 0.5);
+            currentQIndex = 0;
+          }
+          renderCurrentQuestion();
+        } else {
+          if (currentQIndex < questionsList.length) {
+            renderCurrentQuestion();
+          } else {
+            finishGame();
+          }
+        }
+      }, 700);
+    }
+
+    /* Finish & Result Display */
+    function finishGame() {
+      clearInterval(timerInterval);
+      playSound('fanfare');
+
+      // Trigger Confetti!
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } catch(e){}
+
+      showView('result');
+
+      const danLabel = selectedDan === 'all' ? 'ぜんぶ' : `${selectedDan}のだん`;
+      const modeNames = {
+        'practice': 'じっくりれんしゅう',
+        'timeattack': 'タイムアタック',
+        '1min': '1ぷんかんチャレンジ'
+      };
+
+      document.getElementById('res-mode-dan').innerText = `${modeNames[currentMode]} (${danLabel})`;
+      document.getElementById('res-score').innerText = `${scoreCorrect} 問`;
+
+      let finalTimeStr = "00:00";
+      if (currentMode === '1min') {
+        finalTimeStr = "60びょう";
+      } else {
+        const totalSec = Math.floor((Date.now() - startTime) / 1000);
+        const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+        const s = (totalSec % 60).toString().padStart(2, '0');
+        finalTimeStr = `${m}:${s}`;
+      }
+      document.getElementById('res-time').innerText = finalTimeStr;
+
+      // Save to High Score / Records
+      const isNewRecord = saveRecord(currentMode, selectedDan, scoreCorrect, finalTimeStr);
+      const newBadge = document.getElementById('new-record-badge');
+      if (isNewRecord) {
+        newBadge.classList.remove('hidden');
+      } else {
+        newBadge.classList.add('hidden');
+      }
+    }
+
+    /* ==========================================================================
+       6. RECORDS & LOCALSTORAGE MANAGER
+       ========================================================================== */
+    function saveRecord(mode, dan, score, timeStr) {
+      const key = `kuku_records`;
+      let records = JSON.parse(localStorage.getItem(key) || '[]');
+
+      const recordKey = `${mode}_${dan}`;
+      const existingIndex = records.findIndex(r => r.id === recordKey);
+
+      let isNew = false;
+      const newEntry = {
+        id: recordKey,
+        mode: mode,
+        dan: dan,
+        score: score,
+        time: timeStr,
+        date: new Date().toLocaleDateString('ja-JP')
+      };
+
+      if (existingIndex >= 0) {
+        // Compare high scores
+        if (mode === '1min' && score > records[existingIndex].score) {
+          records[existingIndex] = newEntry;
+          isNew = true;
+        } else if (mode === 'timeattack') {
+          // Compare time (lower is better)
+          if (timeStr < records[existingIndex].time || score > records[existingIndex].score) {
+            records[existingIndex] = newEntry;
+            isNew = true;
+          }
+        }
+      } else {
+        records.push(newEntry);
+        isNew = true;
+      }
+
+      localStorage.setItem(key, JSON.stringify(records));
+      return isNew;
+    }
+
+    function renderRecords() {
+      const container = document.getElementById('records-container');
+      container.innerHTML = '';
+
+      const records = JSON.parse(localStorage.getItem('kuku_records') || '[]');
+
+      if (records.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-slate-400 font-bold">
+            <div class="text-4xl mb-2">⭐</div>
+            まだ きろくが ないよ！<br>あそんで みよう！
+          </div>
+        `;
+        return;
+      }
+
+      records.forEach(r => {
+        const danLabel = r.dan === 'all' ? 'ぜんぶ' : `${r.dan}のだん`;
+        const modeNames = {
+          'practice': 'じっくり',
+          'timeattack': 'タイムアタック',
+          '1min': '1ぷんチャレンジ'
+        };
+
+        const item = document.createElement('div');
+        item.className = 'bg-amber-50 border-2 border-amber-200 rounded-2xl p-3 flex items-center justify-between shadow-sm';
+        item.innerHTML = `
+          <div>
+            <div class="text-xs font-bold text-amber-700">${modeNames[r.mode]} [${danLabel}]</div>
+            <div class="text-xs text-slate-400">${r.date}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-lg font-black text-indigo-600">${r.score} 問</div>
+            <div class="text-xs font-mono font-bold text-slate-500">${r.time}</div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    /* ==========================================================================
+       7. 九九 CHART (ひょう) VIEW
+       ========================================================================== */
+    function renderChart(activeDan) {
+      const tabs = document.getElementById('chart-dan-tabs');
+      tabs.innerHTML = '';
+
+      for (let i = 1; i <= 9; i++) {
+        const btn = document.createElement('button');
+        btn.className = `px-3 py-1.5 rounded-xl font-black text-xs whitespace-nowrap transition ${
+          activeDan === i 
+            ? 'bg-brand-pink text-white shadow' 
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        }`;
+        btn.innerText = `${i}のだん`;
+        btn.onclick = () => renderChart(i);
+        tabs.appendChild(btn);
+      }
+
+      const list = document.getElementById('chart-list');
+      list.innerHTML = '';
+
+      for (let j = 1; j <= 9; j++) {
+        const key = `${activeDan}x${j}`;
+        const chant = CHANTS[key] || '';
+        const ans = activeDan * j;
+
+        const row = document.createElement('div');
+        row.className = 'bg-white rounded-xl p-2.5 px-4 flex items-center justify-between border border-amber-100 shadow-sm';
+        row.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="font-black text-lg text-slate-700">${activeDan} ✕ ${j} ＝ ${ans}</span>
+            <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">「${chant}?」</span>
+          </div>
+          <button onclick="speakCustomChant('${activeDan}', '${j}')" class="text-xs bg-amber-200 hover:bg-amber-300 text-amber-900 p-1.5 rounded-full">🔊</button>
+        `;
+        list.appendChild(row);
+      }
+    }
+
+    function speakCustomChant(n1, n2) {
+      if (!('speechSynthesis' in window)) return;
+      const key = `${n1}x${n2}`;
+      const text = (CHANTS[key] || `${n1} かける ${n2}`) + "？";
+      window.speechSynthesis.cancel();
+      const uttr = new SpeechSynthesisUtterance(text);
+      uttr.lang = 'ja-JP';
+      uttr.rate = 0.9;
+      uttr.pitch = 1.2;
+      window.speechSynthesis.speak(uttr);
+    }
+
+    /* Initialize Default Setup */
+    window.onload = () => {
+      renderDanButtons();
+      setOrder('sequence');
+    };
+  </script>
+</body>
+</html>
