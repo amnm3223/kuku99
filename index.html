@@ -270,8 +270,24 @@
               🔊
             </button>
           </div>
-          <!-- Animal Mascot -->
-          <div id="mascot-emoji" class="text-5xl sm:text-6xl animate-float">🐶</div>
+          <!-- Animal Mascot & Hint Toggle Button -->
+          <div class="flex items-center space-x-4">
+            <div id="mascot-emoji" class="text-5xl sm:text-6xl animate-float">🐶</div>
+            <button onclick="toggleHint()" class="bg-amber-400 hover:bg-amber-500 text-white font-black px-3 py-2 rounded-2xl border-2 border-white bubble-shadow-yellow bounce-interactive transition flex items-center space-x-1 text-sm">
+              <span>💡</span>
+              <span>ヒント</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Visual Hint Box (Hidden by default) -->
+        <div id="hint-box" class="hidden w-full bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-3 mb-3 animate-pop">
+          <div id="hint-text" class="text-xs sm:text-sm font-black text-amber-800 text-center mb-2">
+            3個ずつ 5つ あつまると…？
+          </div>
+          <div id="hint-grid" class="flex flex-wrap justify-center gap-2 max-h-48 overflow-y-auto p-1">
+            <!-- Dynamically populated with groups/blocks -->
+          </div>
         </div>
 
         <!-- Formula Display -->
@@ -431,6 +447,7 @@
 
     // テキスト文字を排除し、すべて絵文字イラストに修正
     const MASCOTS = ['🐶', '🐱', '🐰', '🐻', '🦊', '🐼', '🦁', '🐯', '🐸', '🦄'];
+    const HINT_ICONS = ['🍎', '🌟', '🍓', '🐣', '🧱', '🎈', '🍪', '🍬', '🥕', '🌸'];
 
     /* ==========================================================================
        2. APP STATE
@@ -701,6 +718,9 @@
       document.getElementById('answer-slot').innerText = "?";
       document.getElementById('answer-slot').classList.remove('text-indigo-600', 'bg-emerald-100');
 
+      // Hide Hint Box on new question
+      document.getElementById('hint-box').classList.add('hidden');
+
       const q = questionsList[currentQIndex];
 
       // Update Labels
@@ -723,9 +743,44 @@
       const randomMascot = MASCOTS[Math.floor(Math.random() * MASCOTS.length)];
       document.getElementById('mascot-emoji').innerText = randomMascot;
 
+      // Prepare Visual Hint Content
+      renderHintContent(q.n1, q.n2);
+
       // Speak chant automatically if sound enabled
       if (soundEnabled) {
         speakChant();
+      }
+    }
+
+    /* Toggle & Render Visual Hint */
+    function toggleHint() {
+      playSound('click');
+      const hintBox = document.getElementById('hint-box');
+      hintBox.classList.toggle('hidden');
+    }
+
+    function renderHintContent(n1, n2) {
+      const textEl = document.getElementById('hint-text');
+      const gridEl = document.getElementById('hint-grid');
+      
+      textEl.innerText = `💡 ${n1}こ の まとまりが ${n2}つ あるよ！`;
+      gridEl.innerHTML = '';
+
+      const icon = HINT_ICONS[(n1 * n2) % HINT_ICONS.length];
+
+      // Render n2 groups, each containing n1 items
+      for (let g = 0; g < n2; g++) {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'bg-white border-2 border-amber-200 rounded-xl p-1.5 flex flex-wrap gap-1 items-center justify-center shadow-sm';
+        
+        for (let i = 0; i < n1; i++) {
+          const itemSpan = document.createElement('span');
+          itemSpan.className = 'text-xl sm:text-2xl hover:scale-125 transition transform';
+          itemSpan.innerText = icon;
+          groupDiv.appendChild(itemSpan);
+        }
+
+        gridEl.appendChild(groupDiv);
       }
     }
 
